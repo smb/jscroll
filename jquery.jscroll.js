@@ -32,6 +32,7 @@
             pagingSelector: '',
             loadFunc: null,  // function (jscrollData, domTarget, on_complete) { domTarget.html("arbitrary content"); on_complete.call(domTarget, success ? null : "error"); }
             callback: false
+            refresh: false
         }
     };
 
@@ -128,8 +129,8 @@
                 if (_options.autoTrigger && (_options.autoTriggerUntil === false || _options.autoTriggerUntil > 0)) {
                     _nextWrap($next);
                      var scrollingBodyHeight = _$body.height() - $e.offset().top,
-                    	scrollingHeight = ($e.height() < scrollingBodyHeight) ? $e.height() : scrollingBodyHeight,
-                    	windowHeight = ($e.offset().top - _$window.scrollTop() > 0) ? _$window.height() - ($e.offset().top - $(window).scrollTop()) : _$window.height();
+                        scrollingHeight = ($e.height() < scrollingBodyHeight) ? $e.height() : scrollingBodyHeight,
+                        windowHeight = ($e.offset().top - _$window.scrollTop() > 0) ? _$window.height() - ($e.offset().top - $(window).scrollTop()) : _$window.height();
                     if (scrollingHeight <= windowHeight) {
                         _observe();
                     }
@@ -210,10 +211,16 @@
             };
 
         // Initialization
-        $e.data('jscroll', $.extend({}, _data, {initialized: true, waiting: false, nextHref: _nextHref}));
-        _wrapInnerContent();
-        _preloadImage();
-        _setBindings();
+        if (_nextHref !== 'undefined') {
+            $e.data('jscroll', $.extend({}, _data, {initialized: true, waiting: false, nextHref: _nextHref, refresh: _options.refresh}));
+            _wrapInnerContent();
+            _preloadImage();
+            _setBindings();
+        } else {
+            _debug('warn', 'jScroll: nextSelector not found - destroying');
+            _destroy();
+            return false;
+        }
 
         // Expose API methods via the jQuery.jscroll namespace, e.g. $('sel').jscroll.method()
         $.extend($e.jscroll, {
@@ -229,7 +236,7 @@
                 data = $this.data('jscroll'), jscroll;
 
             // Instantiate jScroll on this element if it hasn't been already
-            if (data && data.initialized) {
+            if (data && data.initialized && data.refresh === false){
                 return;
             }
             jscroll = new jScroll($this, m);
