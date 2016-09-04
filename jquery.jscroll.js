@@ -30,6 +30,7 @@
             nextSelector: 'a:last',
             contentSelector: '',
             pagingSelector: '',
+            loadFunc: null,  // function (jscrollData, domTarget, on_complete) { domTarget.html("arbitrary content"); on_complete.call(domTarget, success ? null : "error"); }
             callback: false
         }
     };
@@ -148,6 +149,10 @@
                 }
             },
 
+            _defaultLoadFunc = function (data, target, callback) {
+                target.load(data.nextHref, function (r, status) { $.proxy(callback, target)(status); });
+            },
+
             // Load the next set of content, if available
             _load = function() {
                 var $inner = $e.find('div.jscroll-inner').first(),
@@ -164,8 +169,11 @@
                         }
                     });
 
+                var loadFunc = _options.loadFunc || _defaultLoadFunc;
                 return $e.animate({scrollTop: $inner.outerHeight()}, 0, function() {
-                    $inner.find('div.jscroll-added').last().load(data.nextHref, function(r, status) {
+                    loadFunc(data,
+                             $inner.find('div.jscroll-added').last(),
+                             function(status) {
                         if (status === 'error') {
                             return _destroy();
                         }
